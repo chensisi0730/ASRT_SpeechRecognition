@@ -2,7 +2,7 @@
 
 *.model
 [Mm]odel_speech/
-
+*.idea
 __pycache__
 *.wav
 *.model_yaml

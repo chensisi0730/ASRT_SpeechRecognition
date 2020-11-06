@@ -38,15 +38,29 @@ class DataSpeech():
 		
 		if(self.slash != self.datapath[-1]): # 在目录路径末尾增加斜杠
 			self.datapath = self.datapath + self.slash
-		
-		
+
+		self.thchs30 = True
+		self.stcmds = True
+		self.aishell = False
+		self.prime = False
+		self.mydata = True  # False
+
 		self.dic_wavlist_thchs30 = {}
 		self.dic_symbollist_thchs30 = {}
 		self.dic_wavlist_stcmds = {}
 		self.dic_symbollist_stcmds = {}
-		
+
+		self.dic_wavlist_mydata = {}
+		self.dic_symbollist_mydata = {}
+		self.dic_wavlist_allallall = {}
+		self.dic_symbollist_allallall = {}
+		self.list_wavnum_allallall = []
+
+		self.dic_symbollist_allallall = {}
+		self.list_symbolnum_allallall = []
+
 		self.SymbolNum = 0 # 记录拼音符号数量
-		self.list_symbol = self.GetSymbolList() # 全部汉语拼音符号列表
+		self.list_symbol = self.GetSymbolList() # 全部汉语拼音符号列表  读dict.txt拼音和汉字的对应表,一个拼音对应多个汉字,一共1424行
 		self.list_wavnum=[] # wav文件标记列表
 		self.list_symbolnum=[] # symbol标记列表
 		
@@ -68,30 +82,70 @@ class DataSpeech():
 				test 测试集
 		'''
 		# 设定选取哪一项作为要使用的数据集
-		if(self.type=='train'):
-			filename_wavlist_thchs30 = 'thchs30' + self.slash + 'train.wav.lst'
-			filename_wavlist_stcmds = 'st-cmds' + self.slash + 'train.wav.txt'
-			filename_symbollist_thchs30 = 'thchs30' + self.slash + 'train.syllable.txt'
-			filename_symbollist_stcmds = 'st-cmds' + self.slash + 'train.syllable.txt'
-		elif(self.type=='dev'):
+		if (self.type == 'train'):
+			if (self.thchs30 == True):
+				filename_wavlist_thchs30 = 'thchs30' + self.slash + 'train.wav.lst'
+				filename_symbollist_thchs30 = 'thchs30' + self.slash + 'train.syllable.txt'
+
+			if (self.stcmds == True):
+				filename_wavlist_stcmds = 'st-cmds' + self.slash + 'train.wav.txt'
+				filename_symbollist_stcmds = 'st-cmds' + self.slash + 'train.syllable.txt'
+			# filename_wavlist_aishell = 'aishell' + self.slash + 'train.wav.txt'
+
+			if (self.mydata == True):
+				filename_wavlist_mydata = 'mydata' + self.slash + 'mydata_train.wav.txt'  #####mydata
+				filename_symbollist_mydata = 'mydata' + self.slash + 'mydata_train.sylable.txt'
+
+		elif (self.type == 'dev'):
 			filename_wavlist_thchs30 = 'thchs30' + self.slash + 'cv.wav.lst'
 			filename_wavlist_stcmds = 'st-cmds' + self.slash + 'dev.wav.txt'
 			filename_symbollist_thchs30 = 'thchs30' + self.slash + 'cv.syllable.txt'
 			filename_symbollist_stcmds = 'st-cmds' + self.slash + 'dev.syllable.txt'
-		elif(self.type=='test'):
+
+			filename_wavlist_mydata = 'mydata' + self.slash + 'mydata_train.wav.txt'  #####mydata
+			filename_symbollist_mydata = 'mydata' + self.slash + 'mydata_train.sylable.txt'
+		elif (self.type == 'test'):
 			filename_wavlist_thchs30 = 'thchs30' + self.slash + 'test.wav.lst'
 			filename_wavlist_stcmds = 'st-cmds' + self.slash + 'test.wav.txt'
 			filename_symbollist_thchs30 = 'thchs30' + self.slash + 'test.syllable.txt'
 			filename_symbollist_stcmds = 'st-cmds' + self.slash + 'test.syllable.txt'
+
+			filename_wavlist_mydata = 'mydata' + self.slash + 'mydata_train.wav.txt'  #####mydata
+			filename_symbollist_mydata = 'mydata' + self.slash + 'mydata_train.sylable.txt'
 		else:
-			filename_wavlist = '' # 默认留空
+			filename_wavlist = ''  # 默认留空
 			filename_symbollist = ''
-		# 读取数据列表，wav文件列表和其对应的符号列表
-		self.dic_wavlist_thchs30,self.list_wavnum_thchs30 = get_wav_list(self.datapath + filename_wavlist_thchs30)
-		self.dic_wavlist_stcmds,self.list_wavnum_stcmds = get_wav_list(self.datapath + filename_wavlist_stcmds)
-		
-		self.dic_symbollist_thchs30,self.list_symbolnum_thchs30 = get_wav_symbol(self.datapath + filename_symbollist_thchs30)
-		self.dic_symbollist_stcmds,self.list_symbolnum_stcmds = get_wav_symbol(self.datapath + filename_symbollist_stcmds)
+
+		if (self.thchs30 == True):
+			self.dic_wavlist_thchs30, self.list_wavnum_thchs30 = get_wav_list(
+				self.datapath + filename_wavlist_thchs30)  # 读取数据列表，wav文件列表
+			self.list_wavnum_allallall.extend(self.list_wavnum_thchs30)
+			self.dic_wavlist_allallall.update(self.dic_wavlist_thchs30)
+
+			self.dic_symbollist_thchs30, self.list_symbolnum_thchs30 = get_wav_symbol(
+				self.datapath + filename_symbollist_thchs30)  # 读取其对应的拼音标签列表
+			self.dic_symbollist_allallall.update(self.dic_symbollist_thchs30)
+			self.list_symbolnum_allallall.extend(self.list_symbolnum_thchs30)
+
+		if (self.stcmds == True):
+			self.dic_wavlist_stcmds, self.list_wavnum_stcmds = get_wav_list(self.datapath + filename_wavlist_stcmds)
+			self.list_wavnum_allallall.extend(self.list_wavnum_stcmds)
+			self.dic_wavlist_allallall.update(self.dic_wavlist_stcmds)
+
+			self.dic_symbollist_stcmds, self.list_symbolnum_stcmds = get_wav_symbol(
+				self.datapath + filename_symbollist_stcmds)
+			self.dic_symbollist_allallall.update(self.dic_symbollist_stcmds)
+			self.list_symbolnum_allallall.extend(self.list_symbolnum_stcmds)
+
+		if (self.mydata == True):
+			self.dic_wavlist_mydata, self.list_wavnum_mydata = get_wav_list(self.datapath + filename_wavlist_mydata)
+			self.list_wavnum_allallall.extend(self.list_wavnum_mydata)
+			self.dic_wavlist_allallall.update(self.dic_wavlist_mydata)
+
+			self.dic_symbollist_mydata, self.list_symbolnum_mydata = get_wav_symbol(
+				self.datapath + filename_symbollist_mydata)
+			self.dic_symbollist_allallall.update(self.dic_symbollist_mydata)
+			self.list_symbolnum_allallall.extend(self.list_symbolnum_mydata)
 		self.DataNum = self.GetDataNum()
 	
 	def GetDataNum(self):

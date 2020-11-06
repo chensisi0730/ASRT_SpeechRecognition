@@ -34,8 +34,12 @@ class ModelSpeech(): # 语音模型类
 		'''
 		初始化
 		默认输出的拼音的表示大小是1428，即1427个拼音+1个空白块
+		博主说：
+		不明真相的群众
+加时间窗  ？分帧不是25毫秒一帧吗
+@不明真相的群众 25那才是加窗
 		'''
-		MS_OUTPUT_SIZE = 1428
+		MS_OUTPUT_SIZE = 1429
 		self.MS_OUTPUT_SIZE = MS_OUTPUT_SIZE # 神经网络最终输出的每一个字符向量维度的大小
 		#self.BATCH_SIZE = BATCH_SIZE # 一次训练的batch
 		self.label_max_string_length = 64
@@ -60,10 +64,10 @@ class ModelSpeech(): # 语音模型类
 	def CreateModel(self):
 		'''
 		定义CNN/LSTM/CTC模型，使用函数式模型
-		输入层：200维的特征值序列，一条语音数据的最大长度设为1600（大约16s）
+		输入层：200维的特征值序列，一条语音数据的最大长度设为1600（大约16s） # 10毫秒一个窗口，1600个窗口
 		隐藏层：卷积池化层，卷积核大小为3x3，池化窗口大小为2
 		隐藏层：全连接层
-		输出层：全连接层，神经元数量为self.MS_OUTPUT_SIZE，使用softmax作为激活函数，
+		输出层：全连接层，神经元数量为self.MS_OUTPUT_SIZE，使用softmax作为激活函数，#self.MS_OUTPUT_SIZE = 1424
 		CTC层：使用CTC的loss作为损失函数，实现连接性时序多输出
 		
 		'''
@@ -158,7 +162,7 @@ class ModelSpeech(): # 语音模型类
 		训练模型
 		参数：
 			datapath: 数据保存的路径
-			epoch: 迭代轮数
+			epoch: 迭代轮数  epoch参数请忽略
 			save_step: 每多少步保存一次模型
 			filename: 默认保存文件名，不含文件后缀名
 		'''
@@ -171,7 +175,8 @@ class ModelSpeech(): # 语音模型类
 		for epoch in range(epoch): # 迭代轮数
 			print('[running] train epoch %d .' % epoch)
 			n_step = 0 # 迭代数据数
-			while True:
+			# while True:
+			if n_step < 100:
 				try:
 					print('[message] epoch %d . Have train datas %d+'%(epoch, n_step*save_step))
 					# data_genetator是一个生成器函数
