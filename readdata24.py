@@ -15,7 +15,7 @@ from scipy.fftpack import fft
 class DataSpeech():
 	
 	
-	def __init__(self, path, type, LoadToMem = False, MemWavCount = 10000):
+	def __init__(self, path, type, LoadToMem = False, MemWavCount = 10000):# MemWavCount 限制了数据长度？？只有这里有,没有什么用
 		'''
 		初始化
 		参数：
@@ -153,12 +153,10 @@ class DataSpeech():
 		获取数据的数量
 		当wav数量和symbol数量一致的时候返回正确的值，否则返回-1，代表出错。
 		'''
-		num_wavlist_thchs30 = len(self.dic_wavlist_thchs30)
-		num_symbollist_thchs30 = len(self.dic_symbollist_thchs30)
-		num_wavlist_stcmds = len(self.dic_wavlist_stcmds)
-		num_symbollist_stcmds = len(self.dic_symbollist_stcmds)
-		if(num_wavlist_thchs30 == num_symbollist_thchs30 and num_wavlist_stcmds == num_symbollist_stcmds):
-			DataNum = num_wavlist_thchs30 + num_wavlist_stcmds
+		num_wavlist_all = len(self.dic_wavlist_allallall)
+		num_symbollist_all = len(self.dic_symbollist_allallall)
+		if (num_wavlist_all == num_symbollist_all):
+			DataNum = num_symbollist_all
 		else:
 			DataNum = -1
 		
@@ -170,31 +168,36 @@ class DataSpeech():
 		读取数据，返回神经网络输入值和输出值矩阵(可直接用于神经网络训练的那种)
 		参数：
 			n_start：从编号为n_start数据开始选取数据
-			n_amount：选取的数据数量，默认为1，即一次一个wav文件
+			n_amount：选取的数据数量，默认为1，即一次读一个wav文件
 		返回：
 			三个包含wav特征矩阵的神经网络输入值，和一个标定的类别矩阵神经网络输出值
 		'''
-		bili = 2
-		if(self.type=='train'):
-			bili = 11
-			
-		# 读取一个文件
-		if(n_start % bili == 0):
-			filename = self.dic_wavlist_thchs30[self.list_wavnum_thchs30[n_start // bili]]
-			list_symbol=self.dic_symbollist_thchs30[self.list_symbolnum_thchs30[n_start // bili]]
-		else:
-			n = n_start // bili * (bili - 1)
-			yushu = n_start % bili
-			length=len(self.list_wavnum_stcmds)
-			filename = self.dic_wavlist_stcmds[self.list_wavnum_stcmds[(n + yushu - 1)%length]]
-			list_symbol=self.dic_symbollist_stcmds[self.list_symbolnum_stcmds[(n + yushu - 1)%length]]
-		
+		filename = self.dic_wavlist_allallall[self.list_wavnum_allallall[n_start]]
+		list_symbol = self.dic_symbollist_allallall[self.list_symbolnum_allallall[n_start]]
+
+        # 原来的写的很烂
+        # bili = 2
+        # if (self.type == 'train'):
+        #     bili = 11 #11是比例，ch30数据量1w，stcmds是10w
+        #
+        #
+        # # 读取一个文件
+        # if (n_start % bili == 0): #取余
+        #     filename = self.dic_wavlist_thchs30[self.list_wavnum_thchs30[n_start // bili]]
+        #     list_symbol = self.dic_symbollist_thchs30[self.list_symbolnum_thchs30[n_start // bili]]
+        # else:
+        #     n = n_start // bili * (bili - 1)
+        #     yushu = n_start % bili
+        #     length = len(self.list_wavnum_stcmds)
+        #     filename = self.dic_wavlist_stcmds[self.list_wavnum_stcmds[(n + yushu - 1) % length]]
+        #     list_symbol = self.dic_symbollist_stcmds[self.list_symbolnum_stcmds[(n + yushu - 1) % length]]
+
 		if('Windows' == plat.system()):
 			filename = filename.replace('/','\\') # windows系统下需要执行这一行，对文件路径做特别处理
 		
 		wavsignal,fs=read_wav_data(self.datapath + filename)
 		
-		# 获取输出特征
+		# 获取输出特征  #就是字典表1424中的索引
 		
 		feat_out=[]
 		#print("数据编号",n_start,filename)
@@ -238,6 +241,7 @@ class DataSpeech():
 		#print(input_length,len(input_length))
 		
 		while True:
+			# X 的维度，1600代表要把数据统一到1600（10秒的数据）
 			X = np.zeros((batch_size, audio_length, 200, 1), dtype = np.float)
 			#y = np.zeros((batch_size, 64, self.SymbolNum), dtype=np.int16)
 			y = np.zeros((batch_size, 64), dtype=np.int16)
@@ -280,18 +284,19 @@ class DataSpeech():
 		'''
 		加载拼音符号列表，用于标记符号
 		返回一个列表list类型变量
+		dict.txt拼音和汉字的对应表,一个拼音对应多个汉字=1424
 		'''
 		txt_obj=open('dict.txt','r',encoding='UTF-8') # 打开文件并读入
 		txt_text=txt_obj.read()
-		txt_lines=txt_text.split('\n') # 文本分割
+		txt_lines=txt_text.split('\n') # 文本分割#一行一行分割
 		list_symbol=[] # 初始化符号列表
 		for i in txt_lines:
 			if(i!=''):
 				txt_l=i.split('\t')
 				list_symbol.append(txt_l[0])
 		txt_obj.close()
-		list_symbol.append('_')
-		self.SymbolNum = len(list_symbol)
+		list_symbol.append('_')# 最后加个空白汉字，可能是作为结束符
+		self.SymbolNum = len(list_symbol)# 1424
 		return list_symbol
 
 	def GetSymbolNum(self):
