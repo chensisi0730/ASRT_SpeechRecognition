@@ -28,7 +28,7 @@ from readdata24 import DataSpeech
 abspath = ''
 ModelName='251'
 #NUM_GPU = 2
-
+from keras.backend import batch_normalization as  bn
 class ModelSpeech(): # 语音模型类
 	def __init__(self, datapath):
 		'''
@@ -59,8 +59,17 @@ class ModelSpeech(): # 语音模型类
 			self.slash='/' # 正斜杠
 		if(self.slash != self.datapath[-1]): # 在目录路径末尾增加斜杠
 			self.datapath = self.datapath + self.slash
-	
-		
+
+
+	#2种增加BN 的方法
+	# keras.layers.BatchNormalization(axis=-1, momentum=0.99, epsilon=0.001, center=True, scale=True,
+	# 								beta_initializer='zeros', gamma_initializer='ones',
+	# 								moving_mean_initializer='zeros', moving_variance_initializer='ones',
+	# 								beta_regularizer=None, gamma_regularizer=None, beta_constraint=None,
+	# 								gamma_constraint=None)
+
+	# self.model.add(BatchNormalization(axis=-1, moving_mean_initializer=Constant(value=0.5),
+	# 								  moving_variance_initializer=Constant(value=0.25)))
 	def CreateModel(self):
 		'''
 		定义CNN/LSTM/CTC模型，使用函数式模型
@@ -75,43 +84,97 @@ class ModelSpeech(): # 语音模型类
 		input_data = Input(name='the_input', shape=(self.AUDIO_LENGTH, self.AUDIO_FEATURE_LENGTH, 1))
 		
 		layer_h1 = Conv2D(32, (3,3), use_bias=False, activation='relu', padding='same', kernel_initializer='he_normal')(input_data) # 卷积层
-		layer_h1 = Dropout(0.05)(layer_h1)
+		layer_h1 = Dropout(0.001)(layer_h1)#减小DP2个数量级
+
+		layer_h1 = BatchNormalization(axis=-1, momentum=0.99, epsilon=0.001, center=True, scale=True,#增加BN
+									beta_initializer='zeros', gamma_initializer='ones',
+									moving_mean_initializer='zeros', moving_variance_initializer='ones',
+									beta_regularizer=None, gamma_regularizer=None, beta_constraint=None,
+									gamma_constraint=None)(layer_h1)
+
+
+
 		layer_h2 = Conv2D(32, (3,3), use_bias=True, activation='relu', padding='same', kernel_initializer='he_normal')(layer_h1) # 卷积层
+		layer_h2 = BatchNormalization(axis=-1, momentum=0.99, epsilon=0.001, center=True, scale=True,
+									beta_initializer='zeros', gamma_initializer='ones',
+									moving_mean_initializer='zeros', moving_variance_initializer='ones',
+									beta_regularizer=None, gamma_regularizer=None, beta_constraint=None,
+									gamma_constraint=None)(layer_h2)
 		layer_h3 = MaxPooling2D(pool_size=2, strides=None, padding="valid")(layer_h2) # 池化层
 		#layer_h3 = Dropout(0.2)(layer_h2) # 随机中断部分神经网络连接，防止过拟合
-		layer_h3 = Dropout(0.05)(layer_h3)
+		layer_h3 = Dropout(0.001)(layer_h3)
+		layer_h3 = BatchNormalization(axis=-1, momentum=0.99, epsilon=0.001, center=True, scale=True,
+									beta_initializer='zeros', gamma_initializer='ones',
+									moving_mean_initializer='zeros', moving_variance_initializer='ones',
+									beta_regularizer=None, gamma_regularizer=None, beta_constraint=None,
+									gamma_constraint=None)(layer_h3)
 		layer_h4 = Conv2D(64, (3,3), use_bias=True, activation='relu', padding='same', kernel_initializer='he_normal')(layer_h3) # 卷积层
-		layer_h4 = Dropout(0.1)(layer_h4)
+		layer_h4 = Dropout(0.001)(layer_h4)
+		layer_h4 = BatchNormalization(axis=-1, momentum=0.99, epsilon=0.001, center=True, scale=True,
+									beta_initializer='zeros', gamma_initializer='ones',
+									moving_mean_initializer='zeros', moving_variance_initializer='ones',
+									beta_regularizer=None, gamma_regularizer=None, beta_constraint=None,
+									gamma_constraint=None)(layer_h4)
 		layer_h5 = Conv2D(64, (3,3), use_bias=True, activation='relu', padding='same', kernel_initializer='he_normal')(layer_h4) # 卷积层
 		layer_h6 = MaxPooling2D(pool_size=2, strides=None, padding="valid")(layer_h5) # 池化层
-		
-		layer_h6 = Dropout(0.1)(layer_h6)
+
+		layer_h6 = Dropout(0.001)(layer_h6)
+		layer_h6 = BatchNormalization(axis=-1, momentum=0.99, epsilon=0.001, center=True, scale=True,
+									beta_initializer='zeros', gamma_initializer='ones',
+									moving_mean_initializer='zeros', moving_variance_initializer='ones',
+									beta_regularizer=None, gamma_regularizer=None, beta_constraint=None,
+									gamma_constraint=None)(layer_h6)
 		layer_h7 = Conv2D(128, (3,3), use_bias=True, activation='relu', padding='same', kernel_initializer='he_normal')(layer_h6) # 卷积层
-		layer_h7 = Dropout(0.15)(layer_h7)
+		layer_h7 = Dropout(0.0015)(layer_h7)
+		layer_h7 = BatchNormalization(axis=-1, momentum=0.99, epsilon=0.001, center=True, scale=True,
+									beta_initializer='zeros', gamma_initializer='ones',
+									moving_mean_initializer='zeros', moving_variance_initializer='ones',
+									beta_regularizer=None, gamma_regularizer=None, beta_constraint=None,
+									gamma_constraint=None)(layer_h7)
 		layer_h8 = Conv2D(128, (3,3), use_bias=True, activation='relu', padding='same', kernel_initializer='he_normal')(layer_h7) # 卷积层
 		layer_h9 = MaxPooling2D(pool_size=2, strides=None, padding="valid")(layer_h8) # 池化层
 		
-		layer_h9 = Dropout(0.15)(layer_h9)
+		layer_h9 = Dropout(0.0015)(layer_h9)
+		layer_h9 = BatchNormalization(axis=-1, momentum=0.99, epsilon=0.001, center=True, scale=True,
+									beta_initializer='zeros', gamma_initializer='ones',
+									moving_mean_initializer='zeros', moving_variance_initializer='ones',
+									beta_regularizer=None, gamma_regularizer=None, beta_constraint=None,
+									gamma_constraint=None)(layer_h9)
 		layer_h10 = Conv2D(128, (3,3), use_bias=True, activation='relu', padding='same', kernel_initializer='he_normal')(layer_h9) # 卷积层
-		layer_h10 = Dropout(0.2)(layer_h10)
+		layer_h10 = Dropout(0.002)(layer_h10)
+		layer_h10 = BatchNormalization(axis=-1, momentum=0.99, epsilon=0.001, center=True, scale=True,
+									beta_initializer='zeros', gamma_initializer='ones',
+									moving_mean_initializer='zeros', moving_variance_initializer='ones',
+									beta_regularizer=None, gamma_regularizer=None, beta_constraint=None,
+									gamma_constraint=None)(layer_h10)
 		layer_h11 = Conv2D(128, (3,3), use_bias=True, activation='relu', padding='same', kernel_initializer='he_normal')(layer_h10) # 卷积层
 		layer_h12 = MaxPooling2D(pool_size=1, strides=None, padding="valid")(layer_h11) # 池化层
 		
-		layer_h12 = Dropout(0.2)(layer_h12)
+		layer_h12 = Dropout(0.002)(layer_h12)
+		layer_h12 = BatchNormalization(axis=-1, momentum=0.99, epsilon=0.001, center=True, scale=True,
+									beta_initializer='zeros', gamma_initializer='ones',
+									moving_mean_initializer='zeros', moving_variance_initializer='ones',
+									beta_regularizer=None, gamma_regularizer=None, beta_constraint=None,
+									gamma_constraint=None)(layer_h12)
 		layer_h13 = Conv2D(128, (3,3), use_bias=True, activation='relu', padding='same', kernel_initializer='he_normal')(layer_h12) # 卷积层
-		layer_h13 = Dropout(0.2)(layer_h13)
+		layer_h13 = Dropout(0.002)(layer_h13)
+		layer_h13 = BatchNormalization(axis=-1, momentum=0.99, epsilon=0.001, center=True, scale=True,
+									beta_initializer='zeros', gamma_initializer='ones',
+									moving_mean_initializer='zeros', moving_variance_initializer='ones',
+									beta_regularizer=None, gamma_regularizer=None, beta_constraint=None,
+									gamma_constraint=None)(layer_h13)
 		layer_h14 = Conv2D(128, (3,3), use_bias=True, activation='relu', padding='same', kernel_initializer='he_normal')(layer_h13) # 卷积层
 		layer_h15 = MaxPooling2D(pool_size=1, strides=None, padding="valid")(layer_h14) # 池化层
-		
+
 		#test=Model(inputs = input_data, outputs = layer_h12)
 		#test.summary()
 		
 		layer_h16 = Reshape((200, 3200))(layer_h15) #Reshape层
 		#layer_h5 = LSTM(256, activation='relu', use_bias=True, return_sequences=True)(layer_h4) # LSTM层
 		#layer_h6 = Dropout(0.2)(layer_h5) # 随机中断部分神经网络连接，防止过拟合
-		layer_h16 = Dropout(0.3)(layer_h16)
+		layer_h16 = Dropout(0.003)(layer_h16)
 		layer_h17 = Dense(128, activation="relu", use_bias=True, kernel_initializer='he_normal')(layer_h16) # 全连接层
-		layer_h17 = Dropout(0.3)(layer_h17)
+		layer_h17 = Dropout(0.003)(layer_h17)
 		layer_h18 = Dense(self.MS_OUTPUT_SIZE, use_bias=True, kernel_initializer='he_normal')(layer_h17) # 全连接层
 		
 		y_pred = Activation('softmax', name='Activation0')(layer_h18)
@@ -175,8 +238,8 @@ class ModelSpeech(): # 语音模型类
 		for epoch in range(epoch): # 迭代轮数
 			print('[running] train epoch %d .' % epoch)
 			n_step = 0 # 迭代数据数
-			# while True:
-			if n_step < 100:
+			while True:
+			# if n_step < 100:
 				try:
 					print('[message] epoch %d . Have train datas %d+'%(epoch, n_step*save_step))
 					# data_genetator是一个生成器函数
