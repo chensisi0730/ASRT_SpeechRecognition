@@ -15,7 +15,7 @@ from scipy.fftpack import fft
 class DataSpeech():
 	
 	
-	def __init__(self, path, type, LoadToMem = False, MemWavCount = 10000):# MemWavCount 限制了数据长度？？只有这里有,没有什么用
+	def __init__(self, path, data_sysble_list_path , type, LoadToMem = False, MemWavCount = 10000):# MemWavCount 限制了数据长度？？只有这里有,没有什么用
 		'''
 		初始化
 		参数：
@@ -25,6 +25,7 @@ class DataSpeech():
 		system_type = plat.system() # 由于不同的系统的文件路径表示不一样，需要进行判断
 		
 		self.datapath = path; # 数据存放位置根目录
+		self.data_sysble_list_path = data_sysble_list_path;  # 数据存放位置根目录
 		self.type = type # 数据类型，分为三种：训练集(train)、验证集(dev)、测试集(test)
 		
 		self.slash = ''
@@ -38,26 +39,38 @@ class DataSpeech():
 		
 		if(self.slash != self.datapath[-1]): # 在目录路径末尾增加斜杠
 			self.datapath = self.datapath + self.slash
+		if(self.slash != self.data_sysble_list_path[-1]): # 在目录路径末尾增加斜杠
+			self.data_sysble_list_path = self.data_sysble_list_path + self.slash
 
 		self.thchs30 = True
 		self.stcmds = True
-		self.aishell = False
-		self.prime = False
-		self.mydata = True  # False
+		self.aishell = True
+		self.prime = True
+		self.magicdatatech = False
+		self.mydata = False  # False
 
 		self.dic_wavlist_thchs30 = {}
 		self.dic_symbollist_thchs30 = {}
 		self.dic_wavlist_stcmds = {}
 		self.dic_symbollist_stcmds = {}
+		self.list_filename_aishell = []
+		self.dic_wavlist_aishell = {}
+		self.dic_symbollist_aishell = {}
+		self.list_filename_prime = []
+		self.dic_wavlist_prime = {}
+		self.dic_symbollist_prime = {}
+		self.list_filename_magicdatatech = []
+		self.dic_wavlist_magicdatatech = {}
+		self.dic_symbollist_magicdatatech = {}
 
 		self.dic_wavlist_mydata = {}
 		self.dic_symbollist_mydata = {}
+
 		self.dic_wavlist_allallall = {}
 		self.dic_symbollist_allallall = {}
 		self.list_wavnum_allallall = []
-
 		self.dic_symbollist_allallall = {}
-		self.list_symbolnum_allallall = []
+
 
 		self.SymbolNum = 0 # 记录拼音符号数量
 		self.list_symbol = self.GetSymbolList() # 全部汉语拼音符号列表  读dict.txt拼音和汉字的对应表,一个拼音对应多个汉字,一共1424行
@@ -90,19 +103,30 @@ class DataSpeech():
 			if (self.stcmds == True):
 				filename_wavlist_stcmds = 'st-cmds' + self.slash + 'train.wav.txt'
 				filename_symbollist_stcmds = 'st-cmds' + self.slash + 'train.syllable.txt'
-			# filename_wavlist_aishell = 'aishell' + self.slash + 'train.wav.txt'
+
+			if (self.aishell == True):
+				filename_wavlist_aishell = 'aishell' + self.slash + 'aishell_train.txt'
+
+			if (self.prime == True):
+				filename_wavlist_prime = 'prime' + self.slash + 'prime.txt'
+
+			if (self.magicdatatech == True):
+				filename_wavlist_magicdatatech = 'magicdatatech' + self.slash + 'train.wav.txt'
+				# filename_symbollist_magicdatatech = 'magicdatatech' + self.slash + 'train.syllable.txt'
 
 			if (self.mydata == True):
-				filename_wavlist_mydata = 'mydata' + self.slash + 'mydata_train.wav.txt'  #####mydata
+				filename_wavlist_mydata = 'mydata' + self.slash + 'mydata_train.wav.txt'
 				filename_symbollist_mydata = 'mydata' + self.slash + 'mydata_train.sylable.txt'
 
 		elif (self.type == 'dev'):
 			filename_wavlist_thchs30 = 'thchs30' + self.slash + 'cv.wav.lst'
 			filename_wavlist_stcmds = 'st-cmds' + self.slash + 'dev.wav.txt'
+			filename_wavlist_prime = 'prime' + self.slash + 'prime.txt'
+			filename_wavlist_aishell = 'aishell' + self.slash + 'aishell_dev.txt'
 			filename_symbollist_thchs30 = 'thchs30' + self.slash + 'cv.syllable.txt'
 			filename_symbollist_stcmds = 'st-cmds' + self.slash + 'dev.syllable.txt'
 
-			filename_wavlist_mydata = 'mydata' + self.slash + 'mydata_train.wav.txt'  #####mydata
+			filename_wavlist_mydata = 'mydata' + self.slash + 'mydata_train.wav.txt'
 			filename_symbollist_mydata = 'mydata' + self.slash + 'mydata_train.sylable.txt'
 		elif (self.type == 'test'):
 			filename_wavlist_thchs30 = 'thchs30' + self.slash + 'test.wav.lst'
@@ -110,42 +134,69 @@ class DataSpeech():
 			filename_symbollist_thchs30 = 'thchs30' + self.slash + 'test.syllable.txt'
 			filename_symbollist_stcmds = 'st-cmds' + self.slash + 'test.syllable.txt'
 
-			filename_wavlist_mydata = 'mydata' + self.slash + 'mydata_train.wav.txt'  #####mydata
+			filename_wavlist_mydata = 'mydata' + self.slash + 'mydata_train.wav.txt'
 			filename_symbollist_mydata = 'mydata' + self.slash + 'mydata_train.sylable.txt'
 		else:
 			filename_wavlist = ''  # 默认留空
 			filename_symbollist = ''
 
+
+		#下面实际读取列表文件
 		if (self.thchs30 == True):
 			self.dic_wavlist_thchs30, self.list_wavnum_thchs30 = get_wav_list(
-				self.datapath + filename_wavlist_thchs30)  # 读取数据列表，wav文件列表
-			self.list_wavnum_allallall.extend(self.list_wavnum_thchs30)
-			self.dic_wavlist_allallall.update(self.dic_wavlist_thchs30)
+				self.data_sysble_list_path + filename_wavlist_thchs30)  # 读取数据列表，wav文件列表
+			self.list_wavnum_allallall.extend(self.list_wavnum_thchs30)#文件名的列表
+			self.dic_wavlist_allallall.update(self.dic_wavlist_thchs30)#字典，文件名：路径
 
 			self.dic_symbollist_thchs30, self.list_symbolnum_thchs30 = get_wav_symbol(
-				self.datapath + filename_symbollist_thchs30)  # 读取其对应的拼音标签列表
-			self.dic_symbollist_allallall.update(self.dic_symbollist_thchs30)
-			self.list_symbolnum_allallall.extend(self.list_symbolnum_thchs30)
+				self.data_sysble_list_path + filename_symbollist_thchs30)  # 读取其对应的拼音标签列表
+			self.dic_symbollist_allallall.update(self.dic_symbollist_thchs30)#字典，文件名：拼音标签
+			print("thchs30 train data len ", len(self.list_wavnum_thchs30))
 
 		if (self.stcmds == True):
-			self.dic_wavlist_stcmds, self.list_wavnum_stcmds = get_wav_list(self.datapath + filename_wavlist_stcmds)
+			self.dic_wavlist_stcmds, self.list_wavnum_stcmds = get_wav_list(self.data_sysble_list_path + filename_wavlist_stcmds)
 			self.list_wavnum_allallall.extend(self.list_wavnum_stcmds)
 			self.dic_wavlist_allallall.update(self.dic_wavlist_stcmds)
 
 			self.dic_symbollist_stcmds, self.list_symbolnum_stcmds = get_wav_symbol(
-				self.datapath + filename_symbollist_stcmds)
+				self.data_sysble_list_path + filename_symbollist_stcmds)
 			self.dic_symbollist_allallall.update(self.dic_symbollist_stcmds)
-			self.list_symbolnum_allallall.extend(self.list_symbolnum_stcmds)
+			print("stcmds train data len ", len(self.list_wavnum_stcmds))
+
+		if (self.aishell == True):
+			self.list_filename_aishell , self.dic_wavlist_aishell, self.dic_symbollist_aishell = \
+				get_wav_list_aishell(self.data_sysble_list_path + filename_wavlist_aishell)
+			self.list_wavnum_allallall.extend(self.list_filename_aishell)#文件名的列表
+			self.dic_wavlist_allallall.update(self.dic_wavlist_aishell)#字典，文件名：路径
+			self.dic_symbollist_allallall.update(self.dic_symbollist_aishell)# 字典，文件名：拼音标签
+			print("aishell train data len ", len(self.list_filename_aishell))
+
+		if (self.prime == True):
+			self.list_filename_prime, self.dic_wavlist_prime, self.dic_symbollist_prime = \
+				get_wav_list_aishell(self.data_sysble_list_path + filename_wavlist_prime)
+			self.list_wavnum_allallall.extend(self.list_filename_aishell)#文件名的列表
+			self.dic_wavlist_allallall.update(self.dic_wavlist_aishell)#字典，文件名：路径
+			self.dic_symbollist_allallall.update(self.dic_symbollist_aishell)# 字典，文件名：拼音标签
+			print("prime train data len ", len(self.list_filename_prime))
+
+		if (self.magicdatatech == True):
+			self.dic_wavlist_stcmds, self.list_wavnum_stcmds = get_wav_list(self.data_sysble_list_path + filename_wavlist_stcmds)
+			self.list_wavnum_allallall.extend(self.list_wavnum_stcmds)
+			self.dic_wavlist_allallall.update(self.dic_wavlist_stcmds)
+
+			self.dic_symbollist_stcmds, self.list_symbolnum_stcmds = get_wav_symbol(
+				self.data_sysble_list_path + filename_symbollist_stcmds)
+			self.dic_symbollist_allallall.update(self.dic_symbollist_stcmds)
 
 		if (self.mydata == True):
-			self.dic_wavlist_mydata, self.list_wavnum_mydata = get_wav_list(self.datapath + filename_wavlist_mydata)
+			self.dic_wavlist_mydata, self.list_wavnum_mydata = get_wav_list(self.data_sysble_list_path + filename_wavlist_mydata)
 			self.list_wavnum_allallall.extend(self.list_wavnum_mydata)
 			self.dic_wavlist_allallall.update(self.dic_wavlist_mydata)
 
 			self.dic_symbollist_mydata, self.list_symbolnum_mydata = get_wav_symbol(
-				self.datapath + filename_symbollist_mydata)
+				self.data_sysble_list_path + filename_symbollist_mydata)
 			self.dic_symbollist_allallall.update(self.dic_symbollist_mydata)
-			self.list_symbolnum_allallall.extend(self.list_symbolnum_mydata)
+
 		self.DataNum = self.GetDataNum()
 	
 	def GetDataNum(self):
@@ -153,7 +204,7 @@ class DataSpeech():
 		获取数据的数量
 		当wav数量和symbol数量一致的时候返回正确的值，否则返回-1，代表出错。
 		'''
-		num_wavlist_all = len(self.dic_wavlist_allallall)
+		num_wavlist_all    = len(self.dic_wavlist_allallall)
 		num_symbollist_all = len(self.dic_symbollist_allallall)
 		if (num_wavlist_all == num_symbollist_all):
 			DataNum = num_symbollist_all
@@ -172,8 +223,8 @@ class DataSpeech():
 		返回：
 			三个包含wav特征矩阵的神经网络输入值，和一个标定的类别矩阵神经网络输出值
 		'''
-		filename = self.dic_wavlist_allallall[self.list_wavnum_allallall[n_start]]
-		list_symbol = self.dic_symbollist_allallall[self.list_symbolnum_allallall[n_start]]
+		filename       = self.dic_wavlist_allallall[self.list_wavnum_allallall[n_start]] #得到文件完整路径
+		list_symbol = self.dic_symbollist_allallall[self.list_wavnum_allallall[n_start]] #得到一个文件的标记
 
         # 原来的写的很烂
         # bili = 2
@@ -203,6 +254,7 @@ class DataSpeech():
 		#print("数据编号",n_start,filename)
 		for i in list_symbol:
 			if(''!=i):
+				# print(filename)
 				n=self.SymbolToNum(i)
 				#v=self.NumToVector(n)
 				#feat_out.append(v)
