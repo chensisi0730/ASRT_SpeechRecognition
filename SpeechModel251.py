@@ -24,13 +24,13 @@ from keras import backend as K
 from keras.optimizers import SGD, Adadelta, Adam
 
 from readdata24 import DataSpeech
-
+# from readdata24 import GetSymbolNum  GetSymbolNum不是类，这么加会报错
 abspath = ''
 ModelName='251'
 #NUM_GPU = 2
 from keras.backend import batch_normalization as  bn
 class ModelSpeech(): # 语音模型类
-	def __init__(self, datapath):
+	def __init__(self, datapath , data_list_path):
 		'''
 		初始化
 		默认输出的拼音的表示大小是1428，即1427个拼音+1个空白块
@@ -39,15 +39,16 @@ class ModelSpeech(): # 语音模型类
 加时间窗  ？分帧不是25毫秒一帧吗
 @不明真相的群众 25那才是加窗
 		'''
-		MS_OUTPUT_SIZE = 1429
+		MS_OUTPUT_SIZE = 1429#改成通过GetSymbolNum来获取chensisi
 		self.MS_OUTPUT_SIZE = MS_OUTPUT_SIZE # 神经网络最终输出的每一个字符向量维度的大小
 		#self.BATCH_SIZE = BATCH_SIZE # 一次训练的batch
 		self.label_max_string_length = 64
-		self.AUDIO_LENGTH = 1600
-		self.AUDIO_FEATURE_LENGTH = 200
-		self._model, self.base_model = self.CreateModel() 
-		
+		self.AUDIO_LENGTH = 1600  # （输入的音频的最大时间长度为16秒，一个对应10毫秒的窗口，称为分窗）
+		self.AUDIO_FEATURE_LENGTH = 200  #25毫秒的数据量对应的特性向量，称为加窗
+		self._model, self.base_model = self.CreateModel()#_model 是后面用来训练模型的
+
 		self.datapath = datapath
+		self.data_list_path = data_list_path
 		self.slash = ''
 		system_type = plat.system() # 由于不同的系统的文件路径表示不一样，需要进行判断
 		if(system_type == 'Windows'):
@@ -59,6 +60,8 @@ class ModelSpeech(): # 语音模型类
 			self.slash='/' # 正斜杠
 		if(self.slash != self.datapath[-1]): # 在目录路径末尾增加斜杠
 			self.datapath = self.datapath + self.slash
+		if(self.slash != self.data_list_path[-1]): # 在目录路径末尾增加斜杠
+			self.data_list_path = self.data_list_path + self.slash
 
 
 	#2种增加BN 的方法
@@ -200,6 +203,7 @@ class ModelSpeech(): # 语音模型类
 		#sgd = SGD(lr=0.0001, decay=1e-6, momentum=0.9, nesterov=True, clipnorm=5)
 		#opt = Adadelta(lr = 0.01, rho = 0.95, epsilon = 1e-06)
 		opt = Adam(lr = 0.001, beta_1 = 0.9, beta_2 = 0.999, decay = 0.0, epsilon = 10e-8)
+		# opt = Adam(lr=0.001, beta_1=0.9, beta_2=0.999, decay=0.0, epsilon=10e-8) org
 		#model.compile(loss={'ctc': lambda y_true, y_pred: y_pred}, optimizer=sgd)
 		model.compile(loss={'ctc': lambda y_true, y_pred: y_pred}, optimizer = opt)
 		
@@ -229,7 +233,7 @@ class ModelSpeech(): # 语音模型类
 			save_step: 每多少步保存一次模型
 			filename: 默认保存文件名，不含文件后缀名
 		'''
-		data=DataSpeech(datapath, 'train')
+		data=DataSpeech(datapath, 'datalist/' , 'train')
 		
 		num_data = data.GetDataNum() # 获取数据的数量
 		
@@ -286,7 +290,7 @@ class ModelSpeech(): # 语音模型类
 			为了减少测试时文件读写的io开销，可以通过调整这个参数来实现
 		
 		'''
-		data=DataSpeech(self.datapath, str_dataset)
+		data=DataSpeech(self.datapath, 'datalist/' ,str_dataset)
 		#data.LoadDataList(str_dataset) 
 		num_data = data.GetDataNum() # 获取数据的数量
 		if(data_count <= 0 or data_count > num_data): # 当data_count为小于等于0或者大于测试数据量的值时，则使用全部数据来测试

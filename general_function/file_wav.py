@@ -217,9 +217,31 @@ def wav_show(wave_data, fs): # 显示出来声音波形
 	plt.plot(time, wave_data)  
 	#plt.subplot(212)  
 	#plt.plot(time, wave_data[1], c = "g")  
-	plt.show()  
+	plt.show()
 
-	
+def	get_wav_list_aishell(filename):
+	'''
+	区别与ASRT的是，这个接口只读取一个文件
+	'''
+	txt_obj=open(filename,'r') # 打开文件并读入
+	txt_text=txt_obj.read()
+	txt_lines=txt_text.split('\n') # 文本按照行分割
+	file_name_list = []  #初始化文件名列表
+	dic_file_path={} # 初始化文件路径字典
+	dic_symbol_landmark={} # 初始化symbol字典
+	for i in txt_lines:
+		filename = ""
+		if(i!=''):
+			txt_l=i.split('\t')#得到3部分
+			filename = txt_l[0].split(os.sep)[4]# os.sep是系统的分隔符
+			file_name_list.append(filename)
+			# txt_l[0]relpath.split(os.sep)[4:]
+			dic_file_path[filename]=txt_l[0]
+			dic_symbol_landmark[filename]=txt_l[1].split(' ')
+	txt_obj.close()
+	return file_name_list , dic_file_path , dic_symbol_landmark
+
+
 def get_wav_list(filename):
 	'''
 	读取一个wav文件列表，返回一个存储该列表的字典类型值
